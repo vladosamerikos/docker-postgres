@@ -758,10 +758,35 @@ def prompt(text, default=None, secret=False):
     return value if value else default
 
 
+def choose_user_database(pg):
+    databases = [row['name'] for row in pg.rows('SELECT datname AS name FROM pg_database WHERE NOT datistemplate AND datallowconn ORDER BY datname')
+                 if row['name'] not in SYSTEM_DATABASES]
+    print('\nDatabase\n 0. Create a new database')
+    for index, name in enumerate(databases, 1):
+        print(f'{index:>2}. {name}')
+    while True:
+        selection = prompt('Choose a database number') or ''
+        if selection.isascii() and selection.isdigit() and 0 <= int(selection) <= len(databases):
+            index = int(selection)
+            if index:
+                return databases[index - 1]
+            break
+        message('Choose one of the listed database numbers.', 'WARN')
+    while True:
+        try:
+            database = database_name(prompt('New database name') or '', protect=True)
+        except ToolError as error:
+            message(str(error), 'WARN')
+            continue
+        if not pg.db_exists(database):
+            return database
+        message('That database already exists; enter a new name.', 'WARN')
+
+
 def guided(pg, action):
     values = [action]
     if action != 'delete-user':
-        values += ['-d', prompt('Database') or '']
+        values += ['-d', choose_user_database(pg) if action == 'create-user' else prompt('Database') or '']
     if action in ('create-user', 'create-db', 'grant', 'revoke', 'set-permissions', 'delete-user', 'change-password', 'show-permissions'):
         user = prompt('Username (blank generates one)' if action in ('create-user', 'create-db') else 'Username')
         if user:

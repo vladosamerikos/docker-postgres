@@ -69,6 +69,8 @@ cd scripts
 ./login-as-root.sh -d postgres --eval 'SELECT version();'
 ```
 
+Interactive user creation offers a numbered list of existing databases and `0` to create a new one.
+
 `create-user` also creates the database if missing. `create-db -d app` creates only a database; add `--with-user` to generate a username, or `-u NAME` to choose one. Omit the password to generate it, or supply `--password VALUE` / `--password-stdin`:
 
 ```sh
