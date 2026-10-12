@@ -1,0 +1,8 @@
+.env
+.credentials
+data/
+backups/
+__pycache__/
+.setup.lock
+.postgres-setup-*
+test/

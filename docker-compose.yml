@@ -1,0 +1,56 @@
+x-postgres: &postgres
+  image: postgres:${POSTGRES_VERSION}
+  restart: unless-stopped
+  container_name: ${CONTAINER_NAME}
+  hostname: ${POSTGRES_HOSTNAME}
+  environment:
+    POSTGRES_USER: ${POSTGRES_USER}
+    POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+    POSTGRES_DB: ${POSTGRES_DB:-postgres}
+    POSTGRES_INITDB_ARGS: --auth-host=scram-sha-256 --auth-local=trust
+    # A consistent explicit subdirectory works with official images 10 through 18+.
+    PGDATA: /var/lib/postgresql/template-data
+  volumes:
+    - './data:/var/lib/postgresql'
+  networks:
+    postgres-net:
+      aliases:
+        - postgres
+        - ${POSTGRES_HOSTNAME}
+  healthcheck:
+    test: [CMD-SHELL, 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+    interval: 10s
+    timeout: 5s
+    retries: 10
+  logging:
+    driver: json-file
+    options:
+      max-size: 15m
+      max-file: '3'
+  deploy:
+    resources:
+      limits:
+        memory: ${POSTGRES_LIMIT_MEMORY:-4G}
+        cpus: '${POSTGRES_LIMIT_CPUS:-2}'
+      reservations:
+        cpus: '${POSTGRES_RESERVATION_CPUS:-0.5}'
+        memory: ${POSTGRES_RESERVATION_MEMORY:-200M}
+
+services:
+  postgres-none:
+    <<: *postgres
+    profiles: [none]
+  postgres-host:
+    <<: *postgres
+    profiles: [host]
+    ports:
+      - '127.0.0.1:${HOST_POSTGRES_PORT}:5432'
+  postgres-lan:
+    <<: *postgres
+    profiles: [lan]
+    ports:
+      - '0.0.0.0:${HOST_POSTGRES_PORT}:5432'
+
+networks:
+  postgres-net:
+    name: ${POSTGRES_NETWORK_NAME:-postgres_network}
