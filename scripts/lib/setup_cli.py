@@ -282,6 +282,8 @@ def gather(root, terminal, values, initialized, container, forced_version):
         default = re.match(r'\d+', values.get('POSTGRES_VERSION', '18'))
         version = forced_version or terminal.choose('PostgreSQL major version (10-18)', default[0] if default and default[0] in VERSIONS else '18',
                                                     lambda value: None if value in VERSIONS else invalid('Choose PostgreSQL 10 through 18.'))
+        if terminal.yes('Use the official Alpine image', True):
+            version += '-alpine'
         updates['POSTGRES_VERSION'] = version
         updates['POSTGRES_USER'] = terminal.choose('Administrator username', values.get('POSTGRES_USER') or 'postgres', validate_admin)
         updates['POSTGRES_DB'] = terminal.choose('Initial database', values.get('POSTGRES_DB') or 'postgres', validate_initial_database)
@@ -435,6 +437,8 @@ def run_setup(root, terminal, forced_version=None):
             stopped = False
             published = False
             try:
+                shared.message('Pulling the latest image for the selected PostgreSQL tag...')
+                compose(root, pending, 'pull')
                 # Stop the old profile before switching modes to release its published port.
                 if old_container:
                     compose(root, env_file, 'down')

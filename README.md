@@ -18,9 +18,11 @@ Or install into `postgres<VERSION>` in the current directory:
 curl -fsSL https://raw.githubusercontent.com/vladosamerikos/docker-postgres/main/setup.sh | bash
 ```
 
-Setup asks for the version, administrator, hostname, networking, credential storage and resource limits. Enter accepts defaults. It generates a password with OpenSSL, saves `.env` and starts PostgreSQL. Unavailable ports can be retried without losing previous answers.
+Setup asks for the major version, whether to use the official Alpine image (default: yes), administrator, hostname, networking, credential storage and resource limits. Enter accepts defaults. It generates a password with OpenSSL, saves `.env` and starts PostgreSQL. Unavailable ports can be retried without losing previous answers.
 
-Run setup again to reconfigure an existing installation while preserving its version, administrator credentials and data in `data/`. Failed recreation restores the previous configuration and restarts a previously running service. Major-version upgrades require a separate migration.
+Choosing `18` uses `postgres:18-alpine`, or `postgres:18` if Alpine is declined. Both tags track the latest minor release within PostgreSQL 18. Setup pulls the selected tag before stopping an existing container, so a cached older image is refreshed each time setup is applied. Running containers do not update automatically.
+
+Run setup again to reconfigure an existing installation while preserving its image tag (including its Alpine/Debian variant or any explicitly pinned minor version), administrator credentials and data in `data/`. The Alpine question only appears for new installations. Failed recreation restores the previous configuration and restarts a previously running service. Major-version upgrades require a separate migration.
 
 For manual configuration, copy `.env.example` to `.env`, set `POSTGRES_PASSWORD`, then run:
 
